@@ -131,14 +131,19 @@ def edit_image(image_path: str, text: str):
     return edit_path
 
 
-def tweet_media(api, path: str, info):
+def tweet_media(api: tp.API, path: str, info):
     """Tweets the file found at the path given with the alt text passed as an
     argument, using the API object given."""
 
-    # Tweet image
+    # Create alt text
     [author, tag, confidence] = info
     alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " + confidence
-    # api.create_media_metadata(path, alt)
+    
+    # Tweet image with its alt text
+    file = open(path, 'rb')
+    r = api.media_upload(filename = path, file = file)
+    api.create_media_metadata(r.media_id_string, alt)
+    api.update_status("", media_ids = [r.media_id_string])
     print(alt)
 
 
