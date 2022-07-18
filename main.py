@@ -1,18 +1,163 @@
-import tweepy
+# Python modules
+from bs4 import BeautifulSoup as bs
+from json import dump, load, loads
+from os import makedirs, path
+from PIL import Image, ImageFont, ImageDraw
+from random import randint
+from requests import get
+from shutil import copyfileobj
 
-# Authentication
+# Twitter module
+import tweepy as tp
 
-keys = open('keys', 'r').read().splitlines()
-api_key = keys[1].split()[1]
-api_key_secret = keys[2].split()[1]
-access_token = keys[3].split()[1]
-access_token_secret = keys[4].split()[1]
+# Stored functions
+from tag import tag_url_image
 
-auth = tweepy.OAuthHandler(api_key, api_key_secret)
-auth.set_access_token(access_token, access_token_secret)
-api = tweepy.API(auth, wait_on_rate_limit=True)
+# Maximum ID of Picsum Photos as of 16/07/2022
+MAX_ID = 1084
 
-# Actions
+# Image file directory and format
+IMG_DIR = "imgs"
+IMG_FORMAT = ".jpg"
 
-tweet='This is an automated test tweet'
-api.update_status(tweet)
+
+def authenticate():
+    """Authenticates to the Twitter API using a developer account's API keys and a
+    bot account's Access Token keys, both of which must be stored in a JSON file.
+    Returns the API object to be used."""
+
+    # Open local credentials file
+    file = open("keys_twitter.json", "r")
+    keys = load(file)
+    file.close()
+
+    # Get the keys from the file
+    api_key = keys["api_key"]
+    api_key_secret = keys["api_key_secret"]
+    access_token = keys["kuvbot"]["access_token"]
+    access_token_secret = keys["kuvbot"]["access_token_secret"]
+
+    # Authenticate to Twitter API
+    auth = tp.OAuthHandler(api_key, api_key_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    api = tp.API(auth, wait_on_rate_limit=True)
+    return api
+
+
+def load_state():
+    """Loads the current array stored in a JSON file that signals which images have
+    already been selected, if it exists. Otherwise, it creates one to be stored.
+    Returns the array."""
+
+    # If there is no serialized array, initialize one
+    if not path.exists("ids.json"):
+        ids = [0] * MAX_ID
+
+    # If there is one already, load it
+    else:
+        file = open("ids.json", "r")
+        ids = load(file)
+        file.close()
+
+    return ids
+
+
+def save_state(ids):
+    """Saves the array passed as an argument and that signals which images have
+    already been selected to a JSON file, for future usage."""
+
+    # (Over)write array to file
+    file = open("ids.json", "w")
+    dump(ids, file)
+    file.close()
+
+
+def get_random_image_picsum(ids):
+    """Gets a new random image using the Lorem Picsum API. Returns the id and
+    the author of the new image."""
+
+    # Choose a random new image that is available
+    while 1:
+        id = randint(0, MAX_ID)
+        metadata_url = "https://picsum.photos/id/" + str(id) + "/info"
+        page = get(metadata_url)
+        if (ids[id] < 1) and (page.text != "Image does not exist\n"):
+            break
+
+    # Get the image author's name
+    author = loads(page.text)["author"]
+    return [id, author]
+
+
+def download_image(url: str, filename: str):
+    """Downloads an image from the given url to the directory IMG_DIR with the
+    name filename and the format IMG_FORMAT. Returns the path to that image."""
+
+    # If there is no directory for the image file, create one
+    if not path.exists(IMG_DIR):
+        makedirs(IMG_DIR)
+
+    # Open the URL image and return the stream content
+    r = get(url, stream=True)
+
+    # Check if the image was retrieved and ensure its file size is not zero
+    if r.status_code == 200:
+        r.raw.decode_content = True
+        image_path = IMG_DIR + "/" + filename + IMG_FORMAT
+        with open(image_path, "wb") as f:
+            copyfileobj(r.raw, f)
+            return image_path
+    else:
+        print("Error: Image couldn't be retrieved")
+    return None
+
+
+def edit_image(image_path: str, text: str):
+    """Edits the image found at the image_path given with the text passed as
+    argument. Returns the path to the edited image."""
+
+    # Open image and text font with the pillow module
+    image = Image.open(image_path)
+    font = ImageFont.truetype("misc/Windows_Regular.ttf", 40)
+
+    # Convert image to editable and render
+    edit_image = ImageDraw.Draw(image)
+    edit_image.text((1405, 1430), text, font=font, fill=255)
+
+    # Save the result
+    id = image_path.split("/")[1].split(".")[0]
+    edit_path = IMG_DIR + "/" + id + "_edit" + IMG_FORMAT
+    image.save(edit_path)
+    return edit_path
+
+
+def tweet_media(api, path: str, info):
+    """Tweets the file found at the path given with the alt text passed as an
+    argument, using the API object given."""
+
+    # Tweet image
+    [author, tag, confidence] = info
+    alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " + confidence
+    # api.create_media_metadata(path, alt)
+    print(alt)
+
+
+def main():
+
+    api = authenticate()
+    ids = load_state()
+
+    [id, author] = get_random_image_picsum(ids)
+    url = "https://picsum.photos/id/" + str(id) + "/1500"
+    [tag, confidence] = tag_url_image(url)
+
+    url += "?grayscale"
+    image_path = download_image(url, str(id))
+    edit_path = edit_image(image_path, "Kuv")
+
+    tweet_media(api, edit_path, [author, tag, confidence])
+    save_state(ids)
+
+
+if __name__ == "__main__":
+    main()
