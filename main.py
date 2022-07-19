@@ -119,23 +119,19 @@ def edit_image(image_path: str, text: str):
     # Open image, select font and its coordinates with the pillow module
     image = Image.open(image_path)
     font = ImageFont.truetype("misc/Windows_Regular.ttf", 50)
-    x = image.width - 105
-    y = image.height - 80
-
-    # Convert image to editable and render
-    edit_image = ImageDraw.Draw(image)
-    edit_image.text((x, y), text, fill=255, font=font)
+    x = image.width - 85
+    y = image.height - 55
 
     # Create piece of canvas to draw text on and blur
     new = Image.new("RGBA", image.size)
     edit_new = ImageDraw.Draw(new)
-    edit_new.text((x, y), text, fill=0, font=font)
-    new = new.filter(ImageFilter.BoxBlur(7))
+    edit_new.text((x, y), text, fill="black", font=font, anchor="mm")
+    new = new.filter(ImageFilter.BoxBlur(8))
 
     # Paste shadow onto background and draw sharp text
     image.paste(new, new)
     edit_image = ImageDraw.Draw(image)
-    edit_image.text((x, y), text, fill=255, font=font)
+    edit_image.text((x, y), text, fill=255, font=font, anchor="mm")
 
     # Save the result
     id = image_path.split("/")[1].split(".")[0]
@@ -167,8 +163,7 @@ def main():
 
     [id, author] = get_random_image_picsum(ids)
     url = "https://picsum.photos/id/" + str(id) + "/1500"
-    #[tag, confidence] = tag_url_image(url)
-    [tag, confidence] = ["placeholder", "placeholder"]
+    [tag, confidence] = tag_url_image(url)
 
     url += "?grayscale"
     image_path = download_image(url, str(id))
@@ -178,29 +173,6 @@ def main():
     save_state(ids)
 
 
-def main2():
-
-    api = authenticate()
-    ids = load_state()
-
-    [id, author] = get_random_image_picsum(ids)
-    print("ID: " + str(id))
-
-    r = get("https://picsum.photos/id/" + str(id) + "/1500/1500?grayscale", stream=True)
-    if r.status_code == 200:
-        r.raw.decode_content = True
-        image_path = IMG_DIR + "/" + str(id) + IMG_FORMAT
-        with open(image_path, "wb") as f:
-            copyfileobj(r.raw, f)
-            print(image_path)
-    else:
-        print("Error: Image couldn't be retrieved")
-
-
-def main3():
-    edit_image("imgs/672.jpg", "Kuv")
-
-
 if __name__ == "__main__":
 
-    main2()
+    main()
