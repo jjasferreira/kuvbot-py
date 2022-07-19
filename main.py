@@ -2,7 +2,7 @@
 from bs4 import BeautifulSoup as bs
 from json import dump, load, loads
 from os import makedirs, path
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 from random import randint
 from requests import get
 from shutil import copyfileobj
@@ -109,20 +109,33 @@ def download_image(url: str, filename: str):
             return image_path
     else:
         print("Error: Image couldn't be retrieved")
-    return None
+        return None
 
 
 def edit_image(image_path: str, text: str):
     """Edits the image found at the image_path given with the text passed as
-    argument. Returns the path to the edited image."""
+    argument using the pillow module. Returns the edited image path."""
 
-    # Open image and text font with the pillow module
+    # Open image, select font and its coordinates with the pillow module
     image = Image.open(image_path)
-    font = ImageFont.truetype("misc/Windows_Regular.ttf", 40)
+    font = ImageFont.truetype("misc/Windows_Regular.ttf", 50)
+    x = image.width - 105
+    y = image.height - 80
 
     # Convert image to editable and render
     edit_image = ImageDraw.Draw(image)
-    edit_image.text((1405, 1430), text, font=font, fill=255)
+    edit_image.text((x, y), text, fill=255, font=font)
+
+    # Create piece of canvas to draw text on and blur
+    new = Image.new("RGBA", image.size)
+    edit_new = ImageDraw.Draw(new)
+    edit_new.text((x, y), text, fill=0, font=font)
+    new = new.filter(ImageFilter.BoxBlur(7))
+
+    # Paste shadow onto background and draw sharp text
+    image.paste(new, new)
+    edit_image = ImageDraw.Draw(image)
+    edit_image.text((x, y), text, fill=255, font=font)
 
     # Save the result
     id = image_path.split("/")[1].split(".")[0]
@@ -138,12 +151,12 @@ def tweet_media(api: tp.API, path: str, info):
     # Create alt text
     [author, tag, confidence] = info
     alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " + confidence
-    
+
     # Tweet image with its alt text
-    file = open(path, 'rb')
-    r = api.media_upload(filename = path, file = file)
+    file = open(path, "rb")
+    r = api.media_upload(filename=path, file=file)
     api.create_media_metadata(r.media_id_string, alt)
-    api.update_status("", media_ids = [r.media_id_string])
+    api.update_status("", media_ids=[r.media_id_string])
     print(alt)
 
 
@@ -154,7 +167,8 @@ def main():
 
     [id, author] = get_random_image_picsum(ids)
     url = "https://picsum.photos/id/" + str(id) + "/1500"
-    [tag, confidence] = tag_url_image(url)
+    #[tag, confidence] = tag_url_image(url)
+    [tag, confidence] = ["placeholder", "placeholder"]
 
     url += "?grayscale"
     image_path = download_image(url, str(id))
@@ -164,5 +178,29 @@ def main():
     save_state(ids)
 
 
+def main2():
+
+    api = authenticate()
+    ids = load_state()
+
+    [id, author] = get_random_image_picsum(ids)
+    print("ID: " + str(id))
+
+    r = get("https://picsum.photos/id/" + str(id) + "/1500/1500?grayscale", stream=True)
+    if r.status_code == 200:
+        r.raw.decode_content = True
+        image_path = IMG_DIR + "/" + str(id) + IMG_FORMAT
+        with open(image_path, "wb") as f:
+            copyfileobj(r.raw, f)
+            print(image_path)
+    else:
+        print("Error: Image couldn't be retrieved")
+
+
+def main3():
+    edit_image("imgs/672.jpg", "Kuv")
+
+
 if __name__ == "__main__":
-    main()
+
+    main2()
