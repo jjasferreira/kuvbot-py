@@ -119,8 +119,8 @@ def edit_image(image_path: str, text: str):
     # Open image, select font and its coordinates with the pillow module
     image = Image.open(image_path)
     font = ImageFont.truetype("misc/Windows_Regular.ttf", 50)
-    x = image.width - 85
-    y = image.height - 55
+    x = image.width - 82
+    y = image.height - 58
 
     # Create piece of canvas to draw text on and blur
     new = Image.new("RGBA", image.size)
