@@ -27,15 +27,15 @@ def authenticate():
     Returns the API object to be used."""
 
     # Open local credentials file
-    file = open("keys_twitter.json", "r")
+    file = open("keys.json", "r")
     keys = load(file)
     file.close()
 
     # Get the keys from the file
-    api_key = keys["api_key"]
-    api_key_secret = keys["api_key_secret"]
-    access_token = keys["kuvbot"]["access_token"]
-    access_token_secret = keys["kuvbot"]["access_token_secret"]
+    api_key = keys["twitter"]["api_key"]
+    api_key_secret = keys["twitter"]["api_key_secret"]
+    access_token = keys["twitter"]["kuvbot"]["access_token"]
+    access_token_secret = keys["twitter"]["kuvbot"]["access_token_secret"]
 
     # Authenticate to Twitter API
     auth = tp.OAuthHandler(api_key, api_key_secret)

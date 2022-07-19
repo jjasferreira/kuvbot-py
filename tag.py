@@ -8,13 +8,13 @@ def tag_url_image(url: str):
     """
 
     # Open local credentials file
-    file = open("keys_imagga.json", "r")
+    file = open("keys.json", "r")
     keys = load(file)
     file.close()
 
     # Authentication with the API keys
-    api_key = keys["api_key"]
-    api_key_secret = keys["api_key_secret"]
+    api_key = keys["imagga"]["api_key"]
+    api_key_secret = keys["imagga"]["api_key_secret"]
 
     # Get the response from Imagga
     response = get(
