@@ -39,4 +39,5 @@ def tag_url_image(url: str):
 if __name__ == "__main__":
 
     # Default test
-    tag_url_image("https://picsum.photos/id/0/1500")
+    [tag, con] = tag_url_image("https://picsum.photos/id/0/1500")
+    print("Tag: " + tag + "\nConfidence: " + con)
