@@ -1,5 +1,4 @@
 # Python modules
-from bs4 import BeautifulSoup as bs
 from json import dump, load, loads
 from os import makedirs, path
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
