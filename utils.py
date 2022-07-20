@@ -9,9 +9,6 @@ from shutil import copyfileobj
 # Twitter module
 import tweepy as tp
 
-# Stored functions
-from tag import tag_url_image
-
 # Maximum ID of Picsum Photos as of 16/07/2022
 MAX_ID = 1084
 
@@ -88,6 +85,40 @@ def get_random_image_picsum(ids):
     return [id, author]
 
 
+def tag_url_image_imagga(url: str):
+    """Attempts to give different tags to the image contained in the given url
+    with corresponding confidence rates. Returns the most accurate answer amongst all.
+    """
+
+    # Open local credentials file
+    file = open("keys.json", "r")
+    keys = load(file)
+    file.close()
+
+    # Authentication with the API keys
+    api_key = keys["imagga"]["api_key"]
+    api_key_secret = keys["imagga"]["api_key_secret"]
+
+    # Get the response from Imagga
+    response = get(
+        "https://api.imagga.com/v2/tags?image_url=%s" % url,
+        auth=(api_key, api_key_secret),
+    )
+
+    # Dump full response to a file
+    """
+    file = open("tags.json", "w")
+    dump(response.json(), file)
+    file.close()
+    """
+
+    # Return the most accurate attempt
+    tag = response.json()["result"]["tags"][0]["tag"]["en"]
+    confidence = response.json()["result"]["tags"][0]["confidence"]
+    con = str(round(confidence, 2)) + "%"
+    return [tag, con]
+
+
 def download_image(url: str, filename: str):
     """Downloads an image from the given url to the directory IMG_DIR with the
     name filename and the format IMG_FORMAT. Returns the path to that image."""
@@ -139,39 +170,31 @@ def edit_image(image_path: str, text: str):
     return edit_path
 
 
-def tweet_media(api: tp.API, path: str, info):
+def tweet_media_metadata(api: tp.API, path: str, alt: str):
     """Tweets the file found at the path given with the alt text passed as an
     argument, using the API object given."""
-
-    # Create alt text
-    [author, tag, confidence] = info
-    alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " + confidence
 
     # Tweet image with its alt text
     file = open(path, "rb")
     r = api.media_upload(filename=path, file=file)
     api.create_media_metadata(r.media_id_string, alt)
     api.update_status("", media_ids=[r.media_id_string])
-    print(alt)
 
 
-def main():
+def like_tweet_hashtag(api: tp.API, hashtag: str, result: str):
+    """Likes a random recent Tweet that contains the hashtag passes as an
+    argument, using the API object given."""
 
-    api = authenticate()
-    ids = load_state()
+    # Get a Tweet that uses the hashtag
+    tweet = api.search_tweets(hashtag, lang="en", result_type=result, count=1, tweet_mode='extended')
+    print(tweet)
+    tweet_id = tweet.id
 
-    [id, author] = get_random_image_picsum(ids)
-    url = "https://picsum.photos/id/" + str(id) + "/1500"
-    [tag, confidence] = tag_url_image(url)
+    # Like the Tweet
+    api.create_favorite(tweet_id)
 
-    url += "?grayscale"
-    image_path = download_image(url, str(id))
-    edit_path = edit_image(image_path, "Kuv")
+    # Add new tweet to json file
 
-    tweet_media(api, edit_path, [author, tag, confidence])
-    save_state(ids)
-
-
-if __name__ == "__main__":
-
-    main()
+    # Get the tweet
+    tweet_url = "Tweet URL" #TODO
+    return tweet_url
