@@ -8,6 +8,7 @@
 - [ ] Create Photoshop background
 - [ ] Customize Twitter and Github
 - [ ] Announce beggining time
+- [ ] Passar argumentos do edit_image para fora
 
 # ideas:
 
