@@ -86,6 +86,33 @@ def get_random_image_picsum(ids):
     return [id, author]
 
 
+def get_random_image_unsplash():
+    """Gets a new random image using the Unsplash API. Returns the average
+    color, the download url, the Unsplash url, the user's name and its Twitter
+    handle."""
+
+    # Open local credentials file
+    file = open(JSON_DIR + "/keys.json", "r")
+    keys = load(file)
+    file.close()
+
+    # Authenticate with the API key and get a random image
+    api_key = keys["unsplash"]["api_key"]
+    r = get("https://api.unsplash.com/photos/random?client_id=" + api_key)
+
+    # Get image info
+    if r.status_code == 200:
+        id = r.json()["id"]
+        color = r.json()["color"]
+        download_url = r.json()["urls"]["raw"]
+        url = r.json()["links"]["html"]
+        user = r.json()["user"]["name"]
+        twitter_handle = r.json()["user"]["twitter_username"]
+        return [id, color, download_url, url, user, twitter_handle]
+    else:
+        raise Exception("Image couldn't be retrieved")
+    
+
 def tag_url_image_imagga(url: str):
     """Attempts to give different tags to the image contained in the given url
     with corresponding confidence rates. Returns the most accurate answer amongst all.
@@ -96,7 +123,7 @@ def tag_url_image_imagga(url: str):
     keys = load(file)
     file.close()
 
-    # Authentication with the API keys
+    # Authenticate with the API keys
     api_key = keys["imagga"]["api_key"]
     api_key_secret = keys["imagga"]["api_key_secret"]
 
@@ -137,11 +164,26 @@ def download_image(url: str, filename: str):
             copyfileobj(r.raw, f)
             return image_path
     else:
-        print("Error: Image couldn't be retrieved")
-        return None
+        raise Exception("Image couldn't be downloaded")
 
 
-def edit_image(image_path: str, text: str):
+def edit_image(image_path: str, resize_params: tuple, filename: str, text: str):
+    """Edits the image found at the image_path given with the text passed as
+    argument using the pillow module. Returns the edited image path."""
+
+    # Open image, select font and its coordinates with the pillow module
+    image = Image.open(image_path)
+
+    cropped = image.resize((resize_params[0], resize_params[1]))
+
+    # Save the result
+    edit_path = IMG_DIR + "/" + filename + IMG_FORMAT
+    cropped.save(image_path)
+    return edit_path
+
+
+
+def old_edit_image(image_path: str, text: str):
     """Edits the image found at the image_path given with the text passed as
     argument using the pillow module. Returns the edited image path."""
 
