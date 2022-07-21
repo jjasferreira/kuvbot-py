@@ -1,12 +1,21 @@
 from utils import *
 
-def main():
+
+def action_like_tweet_contains(search: str):
 
     api = authenticate()
-    ids = load_state()
+
+    tweet_url = like_tweet_contains(api, search, "recent")
+    print("[LIKE]:\n" + "Containing: " + search + "\nTweet URL: " + tweet_url + "\n==========")
+
+
+def action_tweet_image_picsum(image_size: int):
+
+    api = authenticate()
+    ids = load_image_ids_state()
 
     [id, author] = get_random_image_picsum(ids)
-    url = "https://picsum.photos/id/" + str(id) + "/1500"
+    url = "https://picsum.photos/id/" + str(id) + "/" + str(image_size)
     [tag, confidence] = tag_url_image_imagga(url)
 
     url += "?grayscale"
@@ -16,9 +25,4 @@ def main():
     alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " + confidence
     tweet_media_metadata(api, edit_path, alt)
     print("[TWEET]:\n" + "Image ID: " + str(id) + "\n" + alt + "\n==========")
-    save_state(ids)
-
-
-if __name__ == "__main__":
-
-    main()
+    save_image_ids_state(ids)

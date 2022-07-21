@@ -12,9 +12,10 @@ import tweepy as tp
 # Maximum ID of Picsum Photos as of 16/07/2022
 MAX_ID = 1084
 
-# Image file directory and format
+# Image file directory and format and JSON files directory
 IMG_DIR = "imgs"
 IMG_FORMAT = ".jpg"
+JSON_DIR = "json"
 
 
 def authenticate():
@@ -36,34 +37,34 @@ def authenticate():
     # Authenticate to Twitter API
     auth = tp.OAuthHandler(api_key, api_key_secret)
     auth.set_access_token(access_token, access_token_secret)
-    api = tp.API(auth, wait_on_rate_limit=True)
+    api = tp.API(auth, wait_on_rate_limit=True, parser=tp.parsers.JSONParser())
     return api
 
 
-def load_state():
+def load_image_ids_state():
     """Loads the current array stored in a JSON file that signals which images have
     already been selected, if it exists. Otherwise, it creates one to be stored.
     Returns the array."""
 
     # If there is no serialized array, initialize one
-    if not path.exists("ids.json"):
+    if not path.exists(JSON_DIR + "/ids.json"):
         ids = [0] * MAX_ID
 
     # If there is one already, load it
     else:
-        file = open("ids.json", "r")
+        file = open(JSON_DIR + "/ids.json", "r")
         ids = load(file)
         file.close()
 
     return ids
 
 
-def save_state(ids):
+def save_image_ids_state(ids):
     """Saves the array passed as an argument and that signals which images have
     already been selected to a JSON file, for future usage."""
 
     # (Over)write array to file
-    file = open("ids.json", "w")
+    file = open(JSON_DIR + "/ids.json", "w")
     dump(ids, file)
     file.close()
 
@@ -91,7 +92,7 @@ def tag_url_image_imagga(url: str):
     """
 
     # Open local credentials file
-    file = open("keys.json", "r")
+    file = open(JSON_DIR + "/keys.json", "r")
     keys = load(file)
     file.close()
 
@@ -106,11 +107,9 @@ def tag_url_image_imagga(url: str):
     )
 
     # Dump full response to a file
-    """
-    file = open("tags.json", "w")
+    file = open(JSON_DIR + "/tags.json", "w")
     dump(response.json(), file)
     file.close()
-    """
 
     # Return the most accurate attempt
     tag = response.json()["result"]["tags"][0]["tag"]["en"]
@@ -181,20 +180,16 @@ def tweet_media_metadata(api: tp.API, path: str, alt: str):
     api.update_status("", media_ids=[r.media_id_string])
 
 
-def like_tweet_hashtag(api: tp.API, hashtag: str, result: str):
-    """Likes a random recent Tweet that contains the hashtag passes as an
-    argument, using the API object given."""
+def like_tweet_contains(api: tp.API, search: str, result: str):
+    """Likes a random recent Tweet that contains the word(s) passed as an
+    argument, using the type of search specified in the result argument
+    and the API object given. Returns the URL of the Tweet."""
 
-    # Get a Tweet that uses the hashtag
-    tweet = api.search_tweets(hashtag, lang="en", result_type=result, count=1, tweet_mode='extended')
-    print(tweet)
-    tweet_id = tweet.id
+    # Get a Tweet that uses the words in the search argument
+    tweet = api.search_tweets(search, lang="en", result_type=result, count=1)["statuses"][0]
+    tweet_id = str(tweet["id"])
 
-    # Like the Tweet
+    # Like the Tweet and return its URL
     api.create_favorite(tweet_id)
-
-    # Add new tweet to json file
-
-    # Get the tweet
-    tweet_url = "Tweet URL" #TODO
+    tweet_url = "https://twitter.com/i/web/status/" + tweet_id
     return tweet_url
