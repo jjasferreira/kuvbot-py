@@ -7,7 +7,14 @@ def action_like_tweet_contains(search: str):
     api = authenticate()
 
     tweet_url = like_tweet_contains(api, search, "recent")
-    print("[LIKE]:\n" + "Containing: " + search + "\nTweet URL: " + tweet_url + "\n==========")
+    print(
+        "[LIKE]:\n"
+        + "Containing: "
+        + search
+        + "\nTweet URL: "
+        + tweet_url
+        + "\n=========="
+    )
 
 
 def action_tweet_image_picsum(image_size: int):
@@ -27,3 +34,35 @@ def action_tweet_image_picsum(image_size: int):
     tweet_media_metadata(api, edit_path, alt)
     print("[TWEET]:\n" + "Image ID: " + str(id) + "\n" + alt + "\n==========")
     save_image_ids_state(ids)
+
+
+def action_tweet_image_unsplash():
+
+    api = authenticate()
+
+    [id, color, download, url, author, handle] = get_random_image_unsplash()
+
+    [tag, confidence] = tag_url_image_imagga(download)
+
+    image_path = download_image(download, id)
+
+    edit_path = edit_image(image_path, (2000, 2000), color, "Kuv")
+
+    alt = (
+        "Author: "
+        + author
+        + "\nTag: "
+        + tag
+        + "\nConfidence: "
+        + confidence
+        + "\nURL: "
+        + url
+    )
+
+    tweet_id = tweet_media_metadata(api, edit_path, alt)
+
+    if handle != "null":
+        text = "https://twitter.com/" + str(handle)
+        reply_to_tweet(api, tweet_id, text)
+
+    print("[TWEET]:\n" + alt + "\n==========")
