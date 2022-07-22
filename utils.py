@@ -1,10 +1,10 @@
 # Python modules
 from json import dump, load, loads
 from os import makedirs, path
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageColor, ImageDraw, ImageFilter, ImageFont
 from random import randint
 from requests import get
-from shutil import copyfileobj
+from shutil import copyfileobj, rmtree
 
 # Twitter module
 import tweepy as tp
@@ -13,9 +13,9 @@ import tweepy as tp
 MAX_ID = 1084
 
 # Image file directory and format and JSON files directory
-IMG_DIR = "imgs"
+IMG_DIR = "imgs/"
 IMG_FORMAT = ".jpg"
-JSON_DIR = "json"
+JSON_DIR = "json/"
 
 
 def authenticate():
@@ -24,7 +24,7 @@ def authenticate():
     Returns the API object to be used."""
 
     # Open local credentials file
-    file = open("keys.json", "r")
+    file = open(JSON_DIR + "keys.json", "r")
     keys = load(file)
     file.close()
 
@@ -37,38 +37,40 @@ def authenticate():
     # Authenticate to Twitter API
     auth = tp.OAuthHandler(api_key, api_key_secret)
     auth.set_access_token(access_token, access_token_secret)
-    api = tp.API(auth, wait_on_rate_limit=True, parser=tp.parsers.JSONParser())
+    api = tp.API(auth, wait_on_rate_limit=True)  # , parser=tp.parsers.JSONParser()
     return api
 
-
+# DEPRECATED:
 def load_image_ids_state():
     """Loads the current array stored in a JSON file that signals which images have
     already been selected, if it exists. Otherwise, it creates one to be stored.
     Returns the array."""
 
     # If there is no serialized array, initialize one
-    if not path.exists(JSON_DIR + "/ids.json"):
+    if not path.exists(JSON_DIR + "ids.json"):
         ids = [0] * MAX_ID
 
     # If there is one already, load it
     else:
-        file = open(JSON_DIR + "/ids.json", "r")
+        file = open(JSON_DIR + "ids.json", "r")
         ids = load(file)
         file.close()
 
     return ids
 
 
+# DEPRECATED:
 def save_image_ids_state(ids):
     """Saves the array passed as an argument and that signals which images have
     already been selected to a JSON file, for future usage."""
 
     # (Over)write array to file
-    file = open(JSON_DIR + "/ids.json", "w")
+    file = open(JSON_DIR + "ids.json", "w")
     dump(ids, file)
     file.close()
 
 
+# DEPRECATED:
 def get_random_image_picsum(ids):
     """Gets a new random image using the Lorem Picsum API. Returns the id and
     the author of the new image."""
@@ -92,7 +94,7 @@ def get_random_image_unsplash():
     handle."""
 
     # Open local credentials file
-    file = open(JSON_DIR + "/keys.json", "r")
+    file = open(JSON_DIR + "keys.json", "r")
     keys = load(file)
     file.close()
 
@@ -111,7 +113,7 @@ def get_random_image_unsplash():
         return [id, color, download_url, url, user, twitter_handle]
     else:
         raise Exception("Image couldn't be retrieved")
-    
+
 
 def tag_url_image_imagga(url: str):
     """Attempts to give different tags to the image contained in the given url
@@ -119,7 +121,7 @@ def tag_url_image_imagga(url: str):
     """
 
     # Open local credentials file
-    file = open(JSON_DIR + "/keys.json", "r")
+    file = open(JSON_DIR + "keys.json", "r")
     keys = load(file)
     file.close()
 
@@ -134,7 +136,7 @@ def tag_url_image_imagga(url: str):
     )
 
     # Dump full response to a file
-    file = open(JSON_DIR + "/tags.json", "w")
+    file = open(JSON_DIR + "tags.json", "w")
     dump(response.json(), file)
     file.close()
 
@@ -149,9 +151,9 @@ def download_image(url: str, filename: str):
     """Downloads an image from the given url to the directory IMG_DIR with the
     name filename and the format IMG_FORMAT. Returns the path to that image."""
 
-    # If there is no directory for the image file, create one
-    if not path.exists(IMG_DIR):
-        makedirs(IMG_DIR)
+    # Eliminates the directory containing the images and re-creates it
+    rmtree(IMG_DIR)
+    makedirs(IMG_DIR)
 
     # Open the URL image and return the stream content
     r = get(url, stream=True)
@@ -159,7 +161,7 @@ def download_image(url: str, filename: str):
     # Check if the image was retrieved and ensure its file size is not zero
     if r.status_code == 200:
         r.raw.decode_content = True
-        image_path = IMG_DIR + "/" + filename + IMG_FORMAT
+        image_path = IMG_DIR + filename + IMG_FORMAT
         with open(image_path, "wb") as f:
             copyfileobj(r.raw, f)
             return image_path
@@ -167,22 +169,54 @@ def download_image(url: str, filename: str):
         raise Exception("Image couldn't be downloaded")
 
 
-def edit_image(image_path: str, resize_params: tuple, filename: str, text: str):
+def edit_image(image_path: str, resize_params: tuple, color: str, text: str):
     """Edits the image found at the image_path given with the text passed as
     argument using the pillow module. Returns the edited image path."""
 
-    # Open image, select font and its coordinates with the pillow module
+    # Open, crop and resize the original image
     image = Image.open(image_path)
+    size = min(image.size)
+    crop = image.crop(
+        (
+            (image.width - size) // 2,
+            (image.height - size) // 2,
+            (image.width + size) // 2,
+            (image.height + size) // 2,
+        )
+    )
+    crop.save(IMG_DIR + "crop" + IMG_FORMAT)
+    resize = crop.resize((resize_params[0], resize_params[1]), Image.ANTIALIAS)
+    resize_path = IMG_DIR + "resize" + IMG_FORMAT
+    resize.save(resize_path)
 
-    cropped = image.resize((resize_params[0], resize_params[1]))
+    # Open the resized image and select font and its coordinates
+    image = Image.open(resize_path)
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype("misc/Windows_Regular.ttf", 50)
+    x = resize.width - 82
+    y = image.height - 58
+
+    # Draw rectangle
+    w, h = font.getsize(text)
+    rect_color = ImageColor.getcolor(color, "RGB")
+    draw.rectangle((x, y, x + w, y + h), fill=rect_color)
+
+    # Draw text
+    font_color = "white"
+    red = 0.299 * rect_color[0]
+    green = 0.587 * rect_color[1]
+    blue = 0.144 * rect_color[2]
+    if (red + green + blue) > 186:
+        font_color = "black"
+    draw.text((x, y), text=text, fill=font_color, font=font)
 
     # Save the result
-    edit_path = IMG_DIR + "/" + filename + IMG_FORMAT
-    cropped.save(image_path)
+    edit_path = IMG_DIR + "edit" + IMG_FORMAT
+    image.save(edit_path)
     return edit_path
 
 
-
+# DEPRECATED:
 def old_edit_image(image_path: str, text: str):
     """Edits the image found at the image_path given with the text passed as
     argument using the pillow module. Returns the edited image path."""
@@ -206,20 +240,30 @@ def old_edit_image(image_path: str, text: str):
 
     # Save the result
     id = image_path.split("/")[1].split(".")[0]
-    edit_path = IMG_DIR + "/" + id + "_edit" + IMG_FORMAT
+    edit_path = IMG_DIR + id + "_edit" + IMG_FORMAT
     image.save(edit_path)
     return edit_path
 
 
 def tweet_media_metadata(api: tp.API, path: str, alt: str):
     """Tweets the file found at the path given with the alt text passed as an
-    argument, using the API object given."""
+    argument, using the API object given. Returns the media"""
 
     # Tweet image with its alt text
     file = open(path, "rb")
     r = api.media_upload(filename=path, file=file)
-    api.create_media_metadata(r.media_id_string, alt)
-    api.update_status("", media_ids=[r.media_id_string])
+    media_id = r.media_id_string
+    api.create_media_metadata(media_id, alt)
+    status = api.update_status("", media_ids=[media_id])
+    return status.id
+
+
+def reply_to_tweet(api: tp.API, tweet_id: int, text: str):
+    """Replies to the given Tweet ID with the text passed as an argument,
+    using the connection to the Twitter API specified in the parameter."""
+    api.update_status(
+        status=text, in_reply_to_status_id=tweet_id, auto_populate_reply_metadata=True
+    )
 
 
 def like_tweet_contains(api: tp.API, search: str, result: str):
@@ -228,8 +272,10 @@ def like_tweet_contains(api: tp.API, search: str, result: str):
     and the API object given. Returns the URL of the Tweet."""
 
     # Get a Tweet that uses the words in the search argument
-    tweet = api.search_tweets(search, lang="en", result_type=result, count=1)["statuses"][0]
-    tweet_id = str(tweet["id"])
+    tweet = api.search_tweets(search, lang="en", result_type=result, count=1).statuses[
+        0
+    ]
+    tweet_id = tweet.id_str
 
     # Like the Tweet and return its URL
     api.create_favorite(tweet_id)
