@@ -1,12 +1,11 @@
 # to-do:
 
-- [ ] Migrate to another image API (Pixabay, Pexels API)
-- [ ] Make Edit photo better (distort)
-- [ ] Loop is inefficient (change to start from end and keep last success on json file)
+- [ ] Make logo and insert in the editing process and fix background/distance
 - [ ] Create Photoshop background
-- [ ] Customize Twitter and Github
-- [ ] Announce beggining time
-- [ ] Passar argumentos do edit_image para fora
+- [ ] Customize Twitter and GitHub
+- [ ] Announce beggining project time
+- [ ] Pass as many "edit_image" arguments as possible to the outside
+- [ ] Comment functions in "actions.py"
 
 # ideas:
 
