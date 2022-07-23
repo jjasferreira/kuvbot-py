@@ -3,6 +3,8 @@ from utils import *
 
 
 def action_like_tweet_contains(search: str):
+    """Likes a random recent Tweet that contains the word(s) passed as
+    argument. Prints the confirmation of action."""
 
     api = authenticate()
 
@@ -17,26 +19,11 @@ def action_like_tweet_contains(search: str):
     )
 
 
-def action_tweet_image_picsum(image_size: int):
-
-    api = authenticate()
-    ids = load_image_ids_state()
-
-    [id, author] = get_random_image_picsum(ids)
-    url = "https://picsum.photos/id/" + str(id) + "/" + str(image_size)
-    [tag, confidence] = tag_url_image_imagga(url)
-
-    url += "?grayscale"
-    image_path = download_image(url, str(id))
-    edit_path = edit_image(image_path, "Kuv")
-
-    alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " + confidence
-    tweet_media_metadata(api, edit_path, alt)
-    print("[TWEET]:\n" + "Image ID: " + str(id) + "\n" + alt + "\n==========")
-    save_image_ids_state(ids)
-
-
 def action_tweet_image_unsplash():
+    """Tweets an edited image from Unsplash with an alt text containing the
+    author, tag guess, confidence percentage and url. It also replies to the
+    Tweet with the image author's Twitter handle, if known. Prints the
+    confirmation of action."""
 
     api = authenticate()
 
@@ -46,7 +33,7 @@ def action_tweet_image_unsplash():
 
     image_path = download_image(download, id)
 
-    edit_path = edit_image(image_path, (2000, 2000), color, "Kuv")
+    edit_path = edit_image(image_path, (2000, 2000), color)
 
     alt = (
         "Author: "
@@ -55,7 +42,7 @@ def action_tweet_image_unsplash():
         + tag
         + "\nConfidence: "
         + confidence
-        + "\nURL: "
+        + "\n\n"
         + url
     )
 
