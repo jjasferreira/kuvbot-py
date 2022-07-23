@@ -1,8 +1,7 @@
 # Python modules
-from json import dump, load, loads
-from os import makedirs, path
-from PIL import Image, ImageColor, ImageDraw, ImageFilter, ImageFont
-from random import randint
+from json import dump, load
+from os import makedirs, mkdir, path
+from PIL import Image, ImageColor, ImageDraw
 from requests import get
 from shutil import copyfileobj, rmtree
 
@@ -89,6 +88,8 @@ def tag_url_image_imagga(url: str):
     )
 
     # Dump full response to a file
+    if not path.exists(JSON_DIR):
+        mkdir(JSON_DIR)
     file = open(JSON_DIR + "tags.json", "w")
     dump(response.json(), file)
     file.close()
