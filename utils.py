@@ -40,53 +40,6 @@ def authenticate():
     api = tp.API(auth, wait_on_rate_limit=True)  # , parser=tp.parsers.JSONParser()
     return api
 
-# DEPRECATED:
-def load_image_ids_state():
-    """Loads the current array stored in a JSON file that signals which images have
-    already been selected, if it exists. Otherwise, it creates one to be stored.
-    Returns the array."""
-
-    # If there is no serialized array, initialize one
-    if not path.exists(JSON_DIR + "ids.json"):
-        ids = [0] * MAX_ID
-
-    # If there is one already, load it
-    else:
-        file = open(JSON_DIR + "ids.json", "r")
-        ids = load(file)
-        file.close()
-
-    return ids
-
-
-# DEPRECATED:
-def save_image_ids_state(ids):
-    """Saves the array passed as an argument and that signals which images have
-    already been selected to a JSON file, for future usage."""
-
-    # (Over)write array to file
-    file = open(JSON_DIR + "ids.json", "w")
-    dump(ids, file)
-    file.close()
-
-
-# DEPRECATED:
-def get_random_image_picsum(ids):
-    """Gets a new random image using the Lorem Picsum API. Returns the id and
-    the author of the new image."""
-
-    # Choose a random new image that is available
-    while 1:
-        id = randint(0, MAX_ID)
-        metadata_url = "https://picsum.photos/id/" + str(id) + "/info"
-        page = get(metadata_url)
-        if (ids[id] < 1) and (page.text != "Image does not exist\n"):
-            break
-
-    # Get the image author's name
-    author = loads(page.text)["author"]
-    return [id, author]
-
 
 def get_random_image_unsplash():
     """Gets a new random image using the Unsplash API. Returns the average
@@ -152,7 +105,8 @@ def download_image(url: str, filename: str):
     name filename and the format IMG_FORMAT. Returns the path to that image."""
 
     # Eliminates the directory containing the images and re-creates it
-    rmtree(IMG_DIR)
+    if path.exists(IMG_DIR):
+        rmtree(IMG_DIR)
     makedirs(IMG_DIR)
 
     # Open the URL image and return the stream content
@@ -169,7 +123,7 @@ def download_image(url: str, filename: str):
         raise Exception("Image couldn't be downloaded")
 
 
-def edit_image(image_path: str, resize_params: tuple, color: str, text: str):
+def edit_image(image_path: str, resize_params: tuple, color: str):
     """Edits the image found at the image_path given with the text passed as
     argument using the pillow module. Returns the edited image path."""
 
@@ -184,64 +138,30 @@ def edit_image(image_path: str, resize_params: tuple, color: str, text: str):
             (image.height + size) // 2,
         )
     )
-    crop.save(IMG_DIR + "crop" + IMG_FORMAT)
     resize = crop.resize((resize_params[0], resize_params[1]), Image.ANTIALIAS)
-    resize_path = IMG_DIR + "resize" + IMG_FORMAT
-    resize.save(resize_path)
 
-    # Open the resized image and select font and its coordinates
-    image = Image.open(resize_path)
-    draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("misc/Windows_Regular.ttf", 50)
-    x = resize.width - 82
-    y = image.height - 58
+    # Open the resized image and draw hexagon with a certain radius
+    draw = ImageDraw.Draw(resize)
+    x = resize.width - 80
+    y = resize.height - 80
+    r = 60
+    color = ImageColor.getcolor(color, "RGB")
+    draw.regular_polygon((x, y, r), 6, fill=color, outline=None)
 
-    # Draw rectangle
-    w, h = font.getsize(text)
-    rect_color = ImageColor.getcolor(color, "RGB")
-    draw.rectangle((x, y, x + w, y + h), fill=rect_color)
-
-    # Draw text
-    font_color = "white"
-    red = 0.299 * rect_color[0]
-    green = 0.587 * rect_color[1]
-    blue = 0.144 * rect_color[2]
+    # Draw logo
+    logo_path = "misc/light_logo.png"
+    red = 0.299 * color[0]
+    green = 0.587 * color[1]
+    blue = 0.144 * color[2]
     if (red + green + blue) > 186:
-        font_color = "black"
-    draw.text((x, y), text=text, fill=font_color, font=font)
+        logo_path = "misc/dark_logo.png"
+    logo = Image.open(logo_path)
+    resize_logo = logo.resize((2 * r, 2 * r), Image.ANTIALIAS)
+    resize.paste(resize_logo, (x - r, y - r, x + r, y + r), resize_logo)
 
     # Save the result
     edit_path = IMG_DIR + "edit" + IMG_FORMAT
-    image.save(edit_path)
-    return edit_path
-
-
-# DEPRECATED:
-def old_edit_image(image_path: str, text: str):
-    """Edits the image found at the image_path given with the text passed as
-    argument using the pillow module. Returns the edited image path."""
-
-    # Open image, select font and its coordinates with the pillow module
-    image = Image.open(image_path)
-    font = ImageFont.truetype("misc/Windows_Regular.ttf", 50)
-    x = image.width - 82
-    y = image.height - 58
-
-    # Create piece of canvas to draw text on and blur
-    new = Image.new("RGBA", image.size)
-    edit_new = ImageDraw.Draw(new)
-    edit_new.text((x, y), text, fill="black", font=font, anchor="mm")
-    new = new.filter(ImageFilter.BoxBlur(8))
-
-    # Paste shadow onto background and draw sharp text
-    image.paste(new, new)
-    edit_image = ImageDraw.Draw(image)
-    edit_image.text((x, y), text, fill=255, font=font, anchor="mm")
-
-    # Save the result
-    id = image_path.split("/")[1].split(".")[0]
-    edit_path = IMG_DIR + id + "_edit" + IMG_FORMAT
-    image.save(edit_path)
+    resize.save(edit_path)
     return edit_path
 
 
