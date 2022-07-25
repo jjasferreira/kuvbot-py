@@ -1,6 +1,7 @@
 # Python modules
-from json import dump, load
-from os import makedirs, mkdir, path
+from ast import literal_eval
+from json import dump
+from os import environ, makedirs, path
 from PIL import Image, ImageColor, ImageDraw
 from requests import get
 from shutil import copyfileobj, rmtree
@@ -14,44 +15,39 @@ MAX_ID = 1084
 # Image file directory and format and JSON files directory
 IMG_DIR = "imgs/"
 IMG_FORMAT = ".jpg"
-JSON_DIR = "json/"
 
 
 def authenticate():
     """Authenticates to the Twitter API using a developer account's API keys and a
-    bot account's Access Token keys, both of which must be stored in a JSON file.
-    Returns the API object to be used."""
+    bot account's Access Token keys, both of which must be stored as environment
+    variables. Returns the API object to be used."""
 
-    # Open local credentials file
-    file = open(JSON_DIR + "keys.json", "r")
-    keys = load(file)
-    file.close()
+    # Get the dictionary containing the keys
+    keys = literal_eval(environ["KEYS"])
 
-    # Get the keys from the file
-    api_key = keys["twitter"]["api_key"]
-    api_key_secret = keys["twitter"]["api_key_secret"]
-    access_token = keys["twitter"]["kuvbot"]["access_token"]
-    access_token_secret = keys["twitter"]["kuvbot"]["access_token_secret"]
+    # Extract the keys
+    api_key = keys["TWITTER_API_KEY"]
+    api_key_secret = keys["TWITTER_API_KEY_SECRET"]
+    access_token = keys["TWITTER_KUVBOT_ACCESS_TOKEN"]
+    access_token_secret = keys["TWITTER_KUVBOT_ACCESS_TOKEN_SECRET"]
 
-    # Authenticate to Twitter API
+    # Authenticate to the Twitter API
     auth = tp.OAuthHandler(api_key, api_key_secret)
     auth.set_access_token(access_token, access_token_secret)
-    api = tp.API(auth, wait_on_rate_limit=True)  # , parser=tp.parsers.JSONParser()
+    api = tp.API(auth, wait_on_rate_limit=True)
     return api
 
 
 def get_random_image_unsplash():
-    """Gets a new random image using the Unsplash API. Returns the average
-    color, the download url, the Unsplash url, the user's name and its Twitter
-    handle."""
+    """Authenticates to the Unsplash API using an API key stored in an environment
+    variable and gets a new random image using. Returns the average color, the
+    download url, the Unsplash url, the user's name and its Twitter handle."""
 
-    # Open local credentials file
-    file = open(JSON_DIR + "keys.json", "r")
-    keys = load(file)
-    file.close()
+    # Get the dictionary containing the keys
+    keys = literal_eval(environ["KEYS"])
 
     # Authenticate with the API key and get a random image
-    api_key = keys["unsplash"]["api_key"]
+    api_key = keys["UNSPLASH_API_KEY"]
     r = get("https://api.unsplash.com/photos/random?client_id=" + api_key)
 
     # Get image info
@@ -68,18 +64,17 @@ def get_random_image_unsplash():
 
 
 def tag_url_image_imagga(url: str):
-    """Attempts to give different tags to the image contained in the given url
-    with corresponding confidence rates. Returns the most accurate answer amongst all.
-    """
+    """Authenticates to the Imagga API using access keys stored in an environment
+    variable and attempts to give different tags to the image contained in the
+    given url with corresponding confidence rates. Returns the most accurate
+    answer amongst all."""
 
-    # Open local credentials file
-    file = open(JSON_DIR + "keys.json", "r")
-    keys = load(file)
-    file.close()
+    # Get the dictionary containing the keys
+    keys = literal_eval(environ["KEYS"])
 
-    # Authenticate with the API keys
-    api_key = keys["imagga"]["api_key"]
-    api_key_secret = keys["imagga"]["api_key_secret"]
+    # Authenticate and get a response fo
+    api_key = keys["IMAGGA_API_KEY"]
+    api_key_secret = keys["IMAGGA_API_KEY_SECRET"]
 
     # Get the response from Imagga
     response = get(
@@ -88,11 +83,11 @@ def tag_url_image_imagga(url: str):
     )
 
     # Dump full response to a file
-    if not path.exists(JSON_DIR):
-        mkdir(JSON_DIR)
-    file = open(JSON_DIR + "tags.json", "w")
+    """
+    file = open("tags.json", "w")
     dump(response.json(), file)
     file.close()
+    """
 
     # Return the most accurate attempt
     tag = response.json()["result"]["tags"][0]["tag"]["en"]
@@ -143,7 +138,7 @@ def edit_image(image_path: str, resize_params: tuple, color: str):
 
     # Open the resized image and draw hexagon with a certain radius
     draw = ImageDraw.Draw(resize)
-    x = resize.width - 80
+    x = resize.width - 85
     y = resize.height - 80
     r = 60
     color = ImageColor.getcolor(color, "RGB")
