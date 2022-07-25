@@ -43,13 +43,13 @@ def action_tweet_image_unsplash():
         + "\nConfidence: "
         + confidence
         + "\n\n"
-        + url
+        + url[8:]
     )
 
     tweet_id = tweet_media_metadata(api, edit_path, alt)
 
-    if handle != "null":
-        text = "https://twitter.com/" + str(handle)
+    if isinstance(handle, str):
+        text = "@" + str(handle)
         reply_to_tweet(api, tweet_id, text)
 
     print("[TWEET]:\n" + alt + "\n==========")

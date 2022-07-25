@@ -188,9 +188,7 @@ def like_tweet_contains(api: tp.API, search: str, result: str):
     and the API object given. Returns the URL of the Tweet."""
 
     # Get a Tweet that uses the words in the search argument
-    tweet = api.search_tweets(search, lang="en", result_type=result, count=1).statuses[
-        0
-    ]
+    tweet = api.search_tweets(search, lang="en", result_type=result, count=1)[0]
     tweet_id = tweet.id_str
 
     # Like the Tweet and return its URL
