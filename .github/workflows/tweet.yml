@@ -1,4 +1,4 @@
-name: Tweet a random image from Unsplash
+name: Tweet an image
 
 on:
   schedule:
@@ -24,4 +24,4 @@ jobs:
       - name: Run Python script
         env:
           KEYS: ${{ secrets.KEYS }}
-        run: python -c "from actions import *; action_tweet_image_unsplash()"
+        run: python -c "from actions import *; action_tweet_image()"

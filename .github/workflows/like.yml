@@ -1,8 +1,8 @@
-name: Like a Tweet containing \#Photography
+name: Like a Tweet
 
 on:
   schedule:
-    - cron: "*/15 * * * *" # Every 15 minutes
+    - cron: "5/15 * * * *" # Every 15 minutes starting from minute 5
 
 jobs:
   build:
@@ -24,4 +24,4 @@ jobs:
       - name: Run Python script
         env:
           KEYS: ${{ secrets.KEYS }}
-        run: python -c "from actions import *; action_like_tweet_contains("#photography")"
+        run: python -c "from actions import *; action_like_tweet()"

@@ -2,11 +2,13 @@
 from utils import *
 
 
-def action_like_tweet_contains(search: str):
-    """Likes a random recent Tweet that contains the word(s) passed as
-    argument. Prints the confirmation of action."""
+def action_like_tweet():
+    """Likes a random recent Tweet that contains the word(s) specified inside
+    the function. Prints the confirmation of action."""
 
     api = authenticate()
+
+    search = "#photography"
 
     tweet_url = like_tweet_contains(api, search, "recent")
     print(
@@ -19,7 +21,7 @@ def action_like_tweet_contains(search: str):
     )
 
 
-def action_tweet_image_unsplash():
+def action_tweet_image():
     """Tweets an edited image from Unsplash with an alt text containing the
     author, tag guess, confidence percentage and url. It also replies to the
     Tweet with the image author's Twitter handle, if known. Prints the
