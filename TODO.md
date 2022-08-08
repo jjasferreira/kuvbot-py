@@ -3,9 +3,9 @@
 - [ ] Create Photoshop background
 - [ ] Customize GitHub repo
 - [ ] Announce beggining project time
+- [ ] Change from 5 minutes to 10 (like tweet)
+- [ ] Like only tweets with images only (while loop until image has media_ids)
 
 ### LESS PRIORITY
 
-- [ ] Create KuvTag to tag the images and send DM asking for approval
-- [ ] Only tag when user hasn't changed name
 - [ ] Run script that saves logs on an independent online doc

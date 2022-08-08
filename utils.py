@@ -17,7 +17,7 @@ IMG_DIR = "imgs/"
 IMG_FORMAT = ".jpg"
 
 
-def authenticate():
+def authenticate(user: str):
     """Authenticates to the Twitter API using a developer account's API keys and a
     bot account's Access Token keys, both of which must be stored as environment
     variables. Returns the API object to be used."""
@@ -28,8 +28,8 @@ def authenticate():
     # Extract the keys
     api_key = keys["TWITTER_API_KEY"]
     api_key_secret = keys["TWITTER_API_KEY_SECRET"]
-    access_token = keys["TWITTER_KUVBOT_ACCESS_TOKEN"]
-    access_token_secret = keys["TWITTER_KUVBOT_ACCESS_TOKEN_SECRET"]
+    access_token = keys["TWITTER_" + user.upper() + "_ACCESS_TOKEN"]
+    access_token_secret = keys["TWITTER_" + user.upper() + "_ACCESS_TOKEN_SECRET"]
 
     # Authenticate to the Twitter API
     auth = tp.OAuthHandler(api_key, api_key_secret)
@@ -138,8 +138,8 @@ def edit_image(image_path: str, resize_params: tuple, color: str):
 
     # Open the resized image and draw hexagon with a certain radius
     draw = ImageDraw.Draw(resize)
-    x = resize.width - 85
-    y = resize.height - 80
+    x = resize.width - 90
+    y = resize.height - 85
     r = 60
     color = ImageColor.getcolor(color, "RGB")
     draw.regular_polygon((x, y, r), 6, fill=color, outline=None)
@@ -163,7 +163,7 @@ def edit_image(image_path: str, resize_params: tuple, color: str):
 
 def tweet_media_metadata(api: tp.API, path: str, alt: str):
     """Tweets the file found at the path given with the alt text passed as an
-    argument, using the API object given. Returns the media"""
+    argument, using the API object given. Returns the Tweet ID."""
 
     # Tweet image with its alt text
     file = open(path, "rb")
@@ -174,12 +174,36 @@ def tweet_media_metadata(api: tp.API, path: str, alt: str):
     return status.id
 
 
+def check_twitter_user(api: tp.API, user: str):
+    """Checks whether the text passed as an argument is a valid Twitter user
+    handle. If so, returns the user id. Otherwise, returns None."""
+
+    # If it is a valid user, returns its ID
+    try:
+        info = api.get_user(screen_name=user)
+        assert isinstance(info, tp.models.User)
+    except:
+        return None
+    else:
+        return info.id
+
+
 def reply_to_tweet(api: tp.API, tweet_id: int, text: str):
     """Replies to the given Tweet ID with the text passed as an argument,
     using the connection to the Twitter API specified in the parameter."""
+
+    # Reply with the text
     api.update_status(
         status=text, in_reply_to_status_id=tweet_id, auto_populate_reply_metadata=True
     )
+
+
+def dm_user(api: tp.API, user_id: int, text: str):
+    """Sends a Direct Message containing the text passed as argument to
+    the user identified by the user ID, using the API object given."""
+
+    # DM the user with the text
+    api.send_direct_message(user_id, text)
 
 
 def like_tweet_contains(api: tp.API, search: str, result: str):
