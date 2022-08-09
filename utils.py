@@ -9,9 +9,6 @@ from shutil import copyfileobj, rmtree
 # Twitter module
 import tweepy as tp
 
-# Maximum ID of Picsum Photos as of 16/07/2022
-MAX_ID = 1084
-
 # Image file directory and format and JSON files directory
 IMG_DIR = "imgs/"
 IMG_FORMAT = ".jpg"
@@ -138,8 +135,8 @@ def edit_image(image_path: str, resize_params: tuple, color: str):
 
     # Open the resized image and draw hexagon with a certain radius
     draw = ImageDraw.Draw(resize)
-    x = resize.width - 90
-    y = resize.height - 85
+    x = resize.width - 95
+    y = resize.height - 90
     r = 60
     color = ImageColor.getcolor(color, "RGB")
     draw.regular_polygon((x, y, r), 6, fill=color, outline=None)

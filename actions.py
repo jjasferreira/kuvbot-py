@@ -36,8 +36,16 @@ def action_tweet_image():
     image_path = download_image(download, id)
     edit_path = edit_image(image_path, (2000, 2000), color)
 
-    alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " \
-    + confidence + "\n\n" + url[8:]
+    alt = (
+        "Author: "
+        + author
+        + "\nTag: "
+        + tag
+        + "\nConfidence: "
+        + confidence
+        + "\n\n"
+        + url[8:]
+    )
     tweet_id = tweet_media_metadata(api, edit_path, alt)
     tweet_url = "https:/twitter.com/" + BOT + "/status/" + str(tweet_id)
 
