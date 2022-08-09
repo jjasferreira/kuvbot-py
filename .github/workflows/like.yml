@@ -2,7 +2,7 @@ name: Like a Tweet
 
 on:
   schedule:
-    - cron: "5/15 * * * *" # Every 15 minutes starting from minute 5
+    - cron: "10/15 * * * *" # Every 15 minutes starting from minute 10
 
 jobs:
   build:
