@@ -36,13 +36,13 @@ def action_tweet_image():
     image_path = download_image(download, id)
     edit_path = edit_image(image_path, (2000, 2000), color)
 
-    alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: "
-    +confidence + "\n\n" + url[8:]
+    alt = "Author: " + author + "\nTag: " + tag + "\nConfidence: " \
+    + confidence + "\n\n" + url[8:]
     tweet_id = tweet_media_metadata(api, edit_path, alt)
-    tweet_url = "https:/twitter.com/" + BOT + "/status/" + tweet_id
+    tweet_url = "https:/twitter.com/" + BOT + "/status/" + str(tweet_id)
 
     if isinstance(handle, str):
-        user_id = check_twitter_user(api, handle)
+        user_id = get_twitter_user_id(api, handle)
         if isinstance(user_id, int):
             text = "@" + handle
             api = authenticate(REPLY)
