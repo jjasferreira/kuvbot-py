@@ -174,7 +174,7 @@ def tweet_media_metadata(api: tp.API, path: str, alt: str):
     return status.id
 
 
-def check_twitter_user(api: tp.API, user: str):
+def get_twitter_user_id(api: tp.API, user: str):
     """Checks whether the text passed as an argument is a valid Twitter user
     handle. If so, returns the user id. Otherwise, returns None."""
 
@@ -202,8 +202,12 @@ def dm_user(api: tp.API, user_id: int, text: str):
     """Sends a Direct Message containing the text passed as argument to
     the user identified by the user ID, using the API object given."""
 
-    # DM the user with the text
-    api.send_direct_message(user_id, text)
+    # If possible, DM the user with the text
+    try:
+        sent = api.send_direct_message(user_id, text)
+        assert isinstance(sent, tp.models.DirectMessage)
+    except:
+        pass
 
 
 def like_tweet_contains(api: tp.API, search: str, result: str):
