@@ -5,7 +5,8 @@
 <a href="https://twitter.com/intent/tweet?screen_name=kuvrep&ref_src=twsrc%5Etfw"><img alt="Tweet to @kuvrep" src="https://dabuttonfactory.com/button.png?t=Mention+%40kuvrep&f=Open+Sans-Bold&ts=25&tc=1da1f2&hp=35&vp=15&c=round&bgt=unicolored&bgc=fff&be=1" height=26px></a>
 
 Kuv is a Twitter bot written in Python 3.10.5 that scrapes images from across the web, edits them, credits them to their author, tags them with a word and a corresponding confidence percentage using A.I. techniques, and finally tweets them.
-In addition to this,
+
+<img src="misc/image.png" alt="Image" width="800"/>
 
 It is currently using the [Unsplash](https://github.com/unsplash) API as an image source, the [Imagga](https://github.com/imagga) API for image recognition and the [Twitter](https://github.com/twitter) API for programmatic access to Twitter in advanced ways.
 
