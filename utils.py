@@ -1,6 +1,6 @@
 # Python modules
 from ast import literal_eval
-from json import dump
+# from json import dump
 from os import environ, makedirs, path
 from PIL import Image, ImageColor, ImageDraw
 from requests import get

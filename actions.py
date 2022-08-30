@@ -1,5 +1,6 @@
 # Import auxiliary functions
 from utils import *
+from random import choice
 
 BOT = "kuvbot"
 REPLY = "kuvrep"
@@ -11,7 +12,8 @@ def action_like_tweet():
 
     api = authenticate(BOT)
 
-    search = "#photography"
+    search = choice(["#photograph", "#photography"])
+
     tweet_url = like_tweet_contains(api, search, "recent")
     print(
         "[LIKE]:\n"
@@ -47,7 +49,7 @@ def action_tweet_image():
         + url[8:]
     )
     tweet_id = tweet_media_metadata(api, edit_path, alt)
-    tweet_url = "https:/twitter.com/" + BOT + "/status/" + str(tweet_id)
+    tweet_url = "https://twitter.com/" + BOT + "/status/" + str(tweet_id)
 
     if isinstance(handle, str):
         user_id = get_twitter_user_id(api, handle)
@@ -57,10 +59,7 @@ def action_tweet_image():
             reply_to_tweet(api, tweet_id, text)
 
             message = (
-                "Hi there!\n Congratulations! A photo of yours was featured \
-                on our page and credited to you. Thank you for being part \
-                of the photography world! ❤️\n If you want us to remove \
-                your work, please let us know. "
+                "Hi there!\n Congratulations! A photo of yours was featured on our page and credited to you. Thank you for being part of the photography world! ❤️\n If you want us to remove your work, please let us know. "
                 + tweet_url
             )
             dm_user(api, user_id, message)

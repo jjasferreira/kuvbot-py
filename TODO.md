@@ -1,6 +1,5 @@
 # TODO
 
-- [ ] Create Photoshop background
 - [ ] Announce beggining project time
 - [ ] Like only tweets with images only (while loop until image has media_ids)
 
